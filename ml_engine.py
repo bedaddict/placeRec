@@ -3,13 +3,33 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
 
-def get_daily_itinerary(target_city):
+def get_daily_itinerary(target_city, is_shuffle=False):
     df = pd.read_csv("data_with_coordinates.csv")
-    city_data = df[df["location"].str.lower() == target_city.lower()].copy()
+    search_term = target_city.lower()
+    
+    # --- THE SMART SEARCH ENGINE ---
+    # 1. Try to find an EXACT match in the location column first
+    if "location" in df.columns:
+        exact_match = df[df["location"].fillna("").str.lower() == search_term].copy()
+    else:
+        exact_match = pd.DataFrame()
+        
+    # 2. If it's a real neighborhood, lock it in! Otherwise, do the broad search.
+    if not exact_match.empty:
+        city_data = exact_match
+    else:
+        mask = pd.Series(False, index=df.index)
+        if "location" in df.columns:
+            mask = mask | df["location"].fillna("").str.lower().str.contains(search_term)
+        if "street" in df.columns:
+            mask = mask | df["street"].fillna("").str.lower().str.contains(search_term)
+        if "address" in df.columns:
+            mask = mask | df["address"].fillna("").str.lower().str.contains(search_term)
+        city_data = df[mask].copy()
+    # ----------------------------------
     
     if city_data.empty:
-        print(f"oopsiee! there is no itinerary for {target_city} right now :(")
-        return []
+        return {"steps": [], "cost": 0}
     
     unique_coordinates = city_data[["lat", "lng"]].drop_duplicates().values
     num_clusters = min(2, len(unique_coordinates))
@@ -20,8 +40,14 @@ def get_daily_itinerary(target_city):
     else:
         kmeans = KMeans(n_clusters=num_clusters, random_state=42, n_init=10)
         city_data["zone_id"] = kmeans.fit_predict(city_data[["lat", "lng"]].values)
-        day_of_year = datetime.now().timetuple().tm_yday
-        selected_zone = day_of_year % num_clusters
+        
+        # --- SHUFFLE LOGIC 1: Pick a random zone ---
+        if is_shuffle:
+            import random
+            selected_zone = random.randint(0, num_clusters - 1)
+        else:
+            day_of_year = datetime.now().timetuple().tm_yday
+            selected_zone = day_of_year % num_clusters
     
     today_pool = city_data[city_data["zone_id"] == selected_zone]
     
@@ -43,18 +69,32 @@ def get_daily_itinerary(target_city):
             match = today_pool[
                 (today_pool["cuisine"].str.lower() == "kafe") &
                 (~today_pool["title"].isin(used_places))
-                ]
+            ]
         else:
             match = today_pool[
                 (today_pool["cuisine"].str.lower() != "kafe") &
                 (~today_pool["title"].isin(used_places))
-                ]
+            ]
         
         if not match.empty:
-            spot = match.sort_values(by="rate", ascending=False).iloc[0]
-            final_itinerary.append(
-                {"time": time, "place": spot["title"], "street": spot["street"]
-                 })
+            # --- SHUFFLE LOGIC 2: Pick a random place instead of top rated ---
+            if is_shuffle:
+                spot = match.sample(n=1).iloc[0]
+            else:
+                spot = match.sort_values(by="rate", ascending=False).iloc[0]
+                
+            street_text = str(spot["street"])
+            raw_price = spot["price_from"]
+            safe_price = int(raw_price) if pd.notna(raw_price) and str(raw_price).strip() != "" else 0
+            
+            final_itinerary.append({
+                "time": time, 
+                "place": spot["title"], 
+                "street": f"{spot['location']}, Jakarta" if street_text == "nan" else street_text,
+                "price": safe_price,
+                "lat": float(spot["lat"]),
+                "lng": float(spot["lng"])
+            })
             used_places.add(spot["title"])
             
         else:
@@ -70,26 +110,35 @@ def get_daily_itinerary(target_city):
                 ]
                 
             if not all_candidates.empty:
-                if num_clusters >= 2:
-                    zone_center = kmeans.cluster_centers_[selected_zone]
-                    distances = np.linalg.norm(all_candidates[["lat", "lng"]].values - zone_center, axis=1)
-                    closest_idx = np.argmin(distances)
-                    spot = all_candidates.iloc[closest_idx]
+                # --- SHUFFLE LOGIC 3: Fallback randomizer ---
+                if is_shuffle:
+                    spot = all_candidates.sample(n=1).iloc[0]
                 else:
-                    spot = all_candidates.sort_values(by="rate", ascending=False).iloc[0]
+                    if num_clusters >= 2:
+                        zone_center = kmeans.cluster_centers_[selected_zone]
+                        distances = np.linalg.norm(all_candidates[["lat", "lng"]].values - zone_center, axis=1)
+                        closest_idx = np.argmin(distances)
+                        spot = all_candidates.iloc[closest_idx]
+                    else:
+                        spot = all_candidates.sort_values(by="rate", ascending=False).iloc[0]
                     
+                street_text = str(spot["street"])
+                raw_price = spot["price_from"]
+                safe_price = int(raw_price) if pd.notna(raw_price) and str(raw_price).strip() != "" else 0
+                
                 final_itinerary.append({
-                    "time": time, "place": spot["title"], "street": spot["street"]
+                    "time": time, 
+                    "place": spot["title"], 
+                    "street": f"{spot['location']}, Jakarta" if street_text == "nan" else street_text,
+                    "price": safe_price,
+                    "lat": float(spot["lat"]),
+                    "lng": float(spot["lng"])
                 })
                 used_places.add(spot["title"])
                 
-    return final_itinerary
-
-if __name__ == "__main__":
-    test_location = "Kemang"
+    total_budget = sum(item["price"] for item in final_itinerary)
     
-    print(f"Testing itinerary for: {test_location.upper()}")
-    itinerary = get_daily_itinerary(test_location)
-    for step in itinerary:
-        print(f"{step['time']} -> {step['place']} {step['street']}")
-    
+    return {
+        "steps": final_itinerary,
+        "cost": total_budget
+    }

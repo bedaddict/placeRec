@@ -12,15 +12,13 @@ app.add_middleware(
 )
 
 @app.get("/api/itinerary")
-def fetch_itinerary(location: str):
-    """
-    This endpoint listens for GET requests at" /api/itinerary?city=YOUR_CITY
-    It catches the city name, feeds it to the ML engine, and sends back JSON.
-    """
-    print(f"Server caught a request for location {location.upper()}")
-    itinerary_data = get_daily_itinerary(location)
-    return{
-        "status": "success", "location": location, "itinerary": itinerary_data
+async def get_itinerary(location: str, shuffle: bool = False):
+    # Pass the shuffle boolean directly into the ml_engine!
+    result = get_daily_itinerary(location, shuffle)
+    
+    return {
+        "itinerary": result["steps"],
+        "total_cost": result["cost"]
     }
     
 @app.get("/")
