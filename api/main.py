@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .ml_engine import get_daily_itinerary
+from .ml_engine import get_daily_itinerary, get_unique_locations
 
 app = FastAPI(title="Itineary Recommendation API")
 app.add_middleware(
@@ -10,6 +10,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/api/locations")
+def get_locations():
+    return {"locations": get_unique_locations()}
 
 @app.get("/api/itinerary")
 async def get_itinerary(location: str, shuffle: bool = False):

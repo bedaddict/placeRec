@@ -46,6 +46,8 @@ const AnimatedPaperPlane = () => (
 
 function App() {
   const [location, setLocation] = useState('');
+  const [availableLocations, setAvailableLocations] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [itinerary, setItinerary] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -55,6 +57,19 @@ function App() {
   const [activeSpot, setActiveSpot] = useState([-6.2088, 106.8456]); // Default: Jakarta
 
   useEffect(() => {
+    // 1. Fetch available locations for autocomplete
+    const fetchLocations = async () => {
+      try {
+        const res = await fetch('/api/locations');
+        const data = await res.json();
+        setAvailableLocations(data.locations || []);
+      } catch (err) {
+        console.error("Failed to load locations");
+      }
+    };
+    fetchLocations();
+
+    // 2. Existing URL check
     const params = new URLSearchParams(window.location.search);
     const sharedRoute = params.get('route');
     if (sharedRoute) {
@@ -97,18 +112,21 @@ function App() {
     }
   };
 
+  const suggestions = availableLocations
+    .filter(loc => loc.toLowerCase().includes(location.toLowerCase()))
+    .slice(0, 5);
+  
   // The Smart Typist: Watches what you type and clears the board if it's empty
   const handleInputChange = (e) => {
     const text = e.target.value;
     setLocation(text);
+    setShowDropdown(text.length > 0);
 
     // If the user completely clears the search bar
     if (text.trim() === '') {
       setItinerary([]); // Hide the timeline
       setTotalCost(0);  // Reset the wallet
       setError('');     // Hide any pink oopsie boxes
-      
-      // Wipe the "?route=..." from the URL without refreshing the page!
       window.history.pushState({}, '', window.location.pathname);
     }
   };
@@ -133,13 +151,38 @@ function App() {
         
       {/* Search Section */}
       <form onSubmit={handleFormSubmit} className="w-full max-w-2xl mx-auto flex gap-3 mb-12">
-        <input
-          type="text"
-          value={location}
-          onChange={handleInputChange}
-          placeholder="Let's try Blok M, Bintaro..."
-          className="flex-1 bg-white border-4 border-black rounded-2xl px-6 py-4 text-black font-bold placeholder-slate-400 shadow-[4px_4px_0_rgba(0,0,0,1)] focus:outline-none focus:translate-y-1 focus:translate-x-1 focus:shadow-none transition-all"
-        />
+        <div className="relative flex-1">
+          <input
+            type="text"
+            value={location}
+            onChange={handleInputChange}
+            onFocus={() => setShowDropdown(location.length > 0)}
+            // Delay closing slightly so clicks on the dropdown register first
+            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+            placeholder="Let's try Blok M, Bintaro..."
+            className="w-full bg-white border-4 border-black rounded-2xl px-6 py-4 text-black font-bold placeholder-slate-400 shadow-[4px_4px_0_rgba(0,0,0,1)] focus:outline-none focus:translate-y-1 focus:translate-x-1 focus:shadow-none transition-all"
+          />
+          
+          {/* THE PREDICTIVE DROPDOWN */}
+          {showDropdown && suggestions.length > 0 && (
+            <ul className="absolute z-50 top-full left-0 right-0 mt-2 bg-white border-4 border-black rounded-2xl shadow-[4px_4px_0_rgba(0,0,0,1)] overflow-hidden">
+              {suggestions.map((suggestion, idx) => (
+                <li 
+                  key={idx}
+                  onClick={() => {
+                    setLocation(suggestion);
+                    setShowDropdown(false);
+                    executeSearch(suggestion); // Auto-search when clicked!
+                  }}
+                  className="px-6 py-3 border-b-2 border-black last:border-0 hover:bg-lime-200 cursor-pointer text-black font-bold transition-colors"
+                >
+                  {suggestion}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        
         <button
           type="submit"
           disabled={loading}

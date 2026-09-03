@@ -7,6 +7,13 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "data_with_coordinates.csv")
 DF = pd.read_csv(CSV_PATH)
 
+def get_unique_locations():
+    # Return a clean, sorted list of unique neighborhoods
+    if "location" in DF.columns:
+        valid_locs = DF["location"].dropna().unique()
+        return sorted([str(loc).strip() for loc in valid_locs if str(loc).strip()])
+    return []
+
 def simple_kmeans(coords, n_clusters=2, max_iter=10):
     if len(coords) <= n_clusters:
         return np.zeros(len(coords), dtype=int)
