@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from ml_engine import get_daily_itinerary
+from .ml_engine import get_daily_itinerary
 
 app = FastAPI(title="Itineary Recommendation API")
 app.add_middleware(
