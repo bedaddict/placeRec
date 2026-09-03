@@ -1,0 +1,22 @@
+{
+  "builds": [
+    {
+      "src": "place-rec-frontend/package.json",
+      "use": "@vercel/vite"
+    },
+    {
+      "src": "main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "main.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "place-rec-frontend/$1"
+    }
+  ]
+}
