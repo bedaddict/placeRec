@@ -8,20 +8,11 @@ CSV_PATH = os.path.join(BASE_DIR, "data_with_coordinates.csv")
 DF = pd.read_csv(CSV_PATH)
 
 def get_unique_locations():
-    columns_to_check = ["location", "street", "address"]
-    available_cols = [col for col in columns_to_check if col in DF.columns]
-    if not available_cols:
-        return []
-    
-    combined = pd.concat([DF[col] for col in available_cols])
-    
-    # Clean the data: remove NaNs, convert to string, remove trailing spaces
-    cleaned = combined.dropna().astype(str).str.strip()
-    
-    # Drop empty strings and grab only the unique values
-    unique_values = cleaned[cleaned != ""].unique()
-    
-    return sorted(unique_values.tolist())
+    # Return a clean, sorted list of unique neighborhoods
+    if "location" in DF.columns:
+        valid_locs = DF["location"].dropna().unique()
+        return sorted([str(loc).strip() for loc in valid_locs if str(loc).strip()])
+    return []
 
 def simple_kmeans(coords, n_clusters=2, max_iter=10):
     if len(coords) <= n_clusters:

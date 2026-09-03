@@ -213,6 +213,35 @@ function App() {
         </div>
       )}
 
+      {/* --- SKELETON LOADING UI --- */}
+      {loading && (
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12 animate-pulse">
+          
+          {/* LEFT SIDE: Skeleton Timeline */}
+          <div className="w-full lg:w-1/2 relative">
+            <div className="absolute left-[33px] top-6 bottom-6 w-1.5 bg-slate-300 z-0 rounded-full"></div>
+            
+            <div className="flex flex-col gap-8 relative z-10">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-start gap-6">
+                  <div className="w-16 flex flex-col items-center mt-4">
+                    <div className="w-6 h-6 rounded-full bg-slate-300 border-4 border-slate-400"></div>
+                  </div>
+                  {/* Empty pulsing card */}
+                  <div className="flex-1 bg-slate-200 border-4 border-slate-400 p-6 rounded-3xl h-36 shadow-[6px_6px_0_rgba(148,163,184,1)]"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* RIGHT SIDE: Skeleton Map */}
+          <div className="w-full lg:w-1/2">
+            <div className="sticky top-8 h-[600px] bg-slate-200 border-4 border-slate-400 rounded-3xl shadow-[8px_8px_0_rgba(148,163,184,1)]"></div>
+          </div>
+
+        </div>
+      )}
+
       {/* --- THE SPLIT SCREEN LAYOUT --- */}
       {itinerary.length > 0 && (
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12">
