@@ -52,9 +52,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [totalCost, setTotalCost] = useState(0);
-  
-  // 3. The Tracker: Remembers exactly which spot you are looking at
-  const [activeSpot, setActiveSpot] = useState([-6.2088, 106.8456]); // Default: Jakarta
+  const [activeSpot, setActiveSpot] = useState([-6.2088, 106.8456]);
+  const [showMapOnMobile, setShowMapOnMobile] = useState(false);
 
   useEffect(() => {
     // 1. Fetch available locations for autocomplete
@@ -247,7 +246,7 @@ function App() {
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12">
           
           {/* LEFT SIDE: The Scrollytelling Timeline */}
-          <div className="w-full lg:w-1/2 relative">
+         <div className={`w-full lg:w-1/2 relative ${showMapOnMobile ? 'hidden lg:block' : 'block'}`}>
             <div className="absolute left-[33px] top-6 bottom-6 w-1.5 bg-black z-0 rounded-full"></div>
             
             <div className="flex flex-col gap-8 relative z-10">
@@ -291,8 +290,8 @@ function App() {
           </div>
 
           {/* RIGHT SIDE: The Sticky Map */}
-          <div className="w-full lg:w-1/2">
-            <div className="sticky top-8 h-[600px] bg-white border-4 border-black rounded-3xl shadow-[8px_8px_0_rgba(0,0,0,1)] overflow-hidden">
+          <div className={`w-full lg:w-1/2 ${!showMapOnMobile ? 'hidden lg:block' : 'block'}`}>
+            <div className="sticky top-8 h-[70vh] lg:h-[600px] bg-white border-4 border-black rounded-3xl shadow-[8px_8px_0_rgba(0,0,0,1)] overflow-hidden">
               <MapContainer center={activeSpot} zoom={16} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -305,6 +304,17 @@ function App() {
           </div>
 
         </div>
+      )}
+
+      {/* --- MOBILE TOGGLE BUTTON --- */}
+      {/* This button is completely hidden on large screens (lg:hidden) */}
+      {!loading && itinerary.length > 0 && (
+        <button
+          onClick={() => setShowMapOnMobile(!showMapOnMobile)}
+          className="lg:hidden fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 bg-yellow-300 border-4 border-black text-black font-black px-8 py-4 rounded-full shadow-[4px_4px_0_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none transition-all flex items-center gap-3 text-lg"
+        >
+          {showMapOnMobile ? '📜 View Timeline' : '🗺️ View Map'}
+        </button>
       )}
 
       {/* Footer Section */}
