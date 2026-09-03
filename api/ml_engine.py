@@ -135,8 +135,8 @@ def get_daily_itinerary(target_city, is_shuffle=False):
                 if is_shuffle:
                     spot = all_candidates.sample(n=1).iloc[0]
                 else:
-                    if num_clusters >= 2:
-                        today_pool[["lat", "lng"]].mean().values
+                   if num_clusters >= 2:
+                        zone_center = today_pool[["lat", "lng"]].mean().values
                         distances = np.linalg.norm(all_candidates[["lat", "lng"]].values - zone_center, axis=1)
                         closest_idx = np.argmin(distances)
                         spot = all_candidates.iloc[closest_idx]

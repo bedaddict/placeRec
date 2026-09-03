@@ -76,7 +76,7 @@ function App() {
 
     try {
       // Notice the new &shuffle parameter at the end of the URL!
-      const response = await fetch(`/api/itinerary`);
+      const response = await fetch(`/api/itinerary?location=${encodeURIComponent(searchQuery)}&shuffle=${isShuffle}`);
 
       const data = await response.json();
 
