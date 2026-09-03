@@ -2,11 +2,28 @@ from datetime import datetime
 import os
 import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "data_with_coordinates.csv")
 DF = pd.read_csv(CSV_PATH)
+
+def simple_kmeans(coords, n_clusters=2, max_iter=10):
+    if len(coords) <= n_clusters:
+        return np.zeros(len(coords), dtype=int)
+    np.random.seed(42)
+    centroids = coords[np.random.choice(len(coords), n_clusters, replace=False)]
+    labels = np.zeros(len(coords), dtype=int)
+    for _ in range(max_iter):
+        distances = np.linalg.norm(coords[:, np.newaxis] - centroids, axis=2)
+        labels = np.argmin(distances, axis=1)
+        new_centroids = np.array([
+            coords[labels == k].mean(axis=0) if np.any(labels == k) else centroids[k] 
+            for k in range(n_clusters)
+        ])
+        if np.allclose(centroids, new_centroids):
+            break
+        centroids = new_centroids
+    return labels
 
 def get_daily_itinerary(target_city, is_shuffle=False):
     df = DF.copy()  # Create a lightweight copy for filtering
@@ -43,8 +60,7 @@ def get_daily_itinerary(target_city, is_shuffle=False):
         city_data["zone_id"] = 0
         selected_zone = 0
     else:
-        kmeans = KMeans(n_clusters=num_clusters, random_state=42, n_init=10)
-        city_data["zone_id"] = kmeans.fit_predict(city_data[["lat", "lng"]].values)
+        city_data["zone_id"] = simple_kmeans(city_data[["lat", "lng"]].values, num_clusters)
         
         # --- SHUFFLE LOGIC 1: Pick a random zone ---
         if is_shuffle:
@@ -120,7 +136,7 @@ def get_daily_itinerary(target_city, is_shuffle=False):
                     spot = all_candidates.sample(n=1).iloc[0]
                 else:
                     if num_clusters >= 2:
-                        zone_center = kmeans.cluster_centers_[selected_zone]
+                        today_pool[["lat", "lng"]].mean().values
                         distances = np.linalg.norm(all_candidates[["lat", "lng"]].values - zone_center, axis=1)
                         closest_idx = np.argmin(distances)
                         spot = all_candidates.iloc[closest_idx]
