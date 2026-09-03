@@ -1,10 +1,15 @@
 from datetime import datetime
+import os
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CSV_PATH = os.path.join(BASE_DIR, "data_with_coordinates.csv")
+DF = pd.read_csv(CSV_PATH)
+
 def get_daily_itinerary(target_city, is_shuffle=False):
-    df = pd.read_csv("data_with_coordinates.csv")
+    df = DF.copy()  # Create a lightweight copy for filtering
     search_term = target_city.lower()
     
     # --- THE SMART SEARCH ENGINE ---
