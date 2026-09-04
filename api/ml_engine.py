@@ -2,10 +2,24 @@ from datetime import datetime
 import os
 import numpy as np
 import pandas as pd
+import difflib
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "data_with_coordinates.csv")
 DF = pd.read_csv(CSV_PATH)
+
+ALIASES = {
+    "jaksel": "jakarta selatan",
+    "jaktim": "jakarta timur",
+    "jakpus": "jakarta pusat",
+    "jakbar": "jakarta barat",
+    "jakut": "jakarta utara",
+    "blokm": "blok m",
+    "alsut": "alam sutera",
+    "pasming": "pasar minggu",
+    "dursaw": "duren sawit",
+    "pik": "pantai indah kapuk"
+}
 
 def get_unique_locations():
     # Return a clean, sorted list of unique neighborhoods
@@ -36,6 +50,8 @@ def get_daily_itinerary(target_city, is_shuffle=False):
     df = DF.copy()  # Create a lightweight copy for filtering
     search_term = target_city.lower()
     
+    if search_term in ALIASES:
+        search_term = ALIASES[search_term]
     # --- THE SMART SEARCH ENGINE ---
     # 1. Try to find an EXACT match in the location column first
     if "location" in df.columns:
@@ -57,7 +73,20 @@ def get_daily_itinerary(target_city, is_shuffle=False):
         city_data = df[mask].copy()
     # ----------------------------------
     
+    # --- NEW TYPO CATCHER ---
     if city_data.empty:
+        if "location" in df.columns:
+            # Get a list of all valid neighborhoods in lowercase
+            valid_locations = [str(x).lower() for x in df["location"].dropna().unique()]
+            
+            # Find the closest matching word (cutoff 0.6 means 60% similarity needed)
+            closest_matches = difflib.get_close_matches(search_term, valid_locations, n=1, cutoff=0.6)
+            
+            if closest_matches:
+                # Return the suggested correction formatted nicely
+                suggested_term = closest_matches[0].title()
+                return {"steps": [], "cost": 0, "suggestion": suggested_term}
+                
         return {"steps": [], "cost": 0}
     
     unique_coordinates = city_data[["lat", "lng"]].drop_duplicates().values

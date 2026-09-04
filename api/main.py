@@ -22,7 +22,8 @@ async def get_itinerary(location: str, shuffle: bool = False):
     
     return {
         "itinerary": result["steps"],
-        "total_cost": result["cost"]
+        "total_cost": result["cost"],
+        "suggestion": result.get("suggestion", None)
     }
     
 @app.get("/")

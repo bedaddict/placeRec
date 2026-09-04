@@ -90,20 +90,33 @@ function App() {
     }
 
     try {
-      // Notice the new &shuffle parameter at the end of the URL!
       const response = await fetch(`/api/itinerary?location=${encodeURIComponent(searchQuery)}&shuffle=${isShuffle}`);
-
       const data = await response.json();
 
       if (data.itinerary && data.itinerary.length > 0) {
         setItinerary(data.itinerary);
         setTotalCost(data.total_cost || 0);
-        // Automatically point the map to the very first spot of the day!
         setActiveSpot([data.itinerary[0].lat, data.itinerary[0].lng]);
+      } else if (data.suggestion) {
+        // NEW: If the backend detected a typo, show the clickable suggestion!
+        setError(
+          <span className="flex justify-center items-center gap-2">
+            Did you mean <button 
+              onClick={() => {
+                setLocation(data.suggestion); // Update the input box
+                executeSearch(data.suggestion); // Search again
+              }} 
+              className="bg-white px-2 py-0.5 border-2 border-black rounded-lg shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-lime-300 active:translate-y-0.5 active:translate-x-0.5 active:shadow-none transition-all underline decoration-2 font-black"
+            >
+              {data.suggestion}
+            </button>?
+          </span>
+        );
       } else {
         setError(`Oopsie! there is no data for "${searchQuery}". Try testing "Kemang" or "Sudirman".`);
       }
     } catch (err) {
+// ...
       // THIS WILL PRINT THE REAL ERROR TO THE SCREEN!
       console.error("THE REAL ERROR:", err);
       setError(`Crash log: ${err.message}`);
