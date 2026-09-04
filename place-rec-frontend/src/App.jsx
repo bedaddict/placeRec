@@ -241,9 +241,20 @@ function App() {
                     <div className="flex items-center text-slate-600 font-bold text-sm gap-2">
                       <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                       <span>{step.street}</span>
+                      </div>
+                    <a 
+                      href={`https://www.google.com/maps/search/?api=1&query=${step.lat},${step.lng}`}
+                      target="_blank" 
+                      rel="noreferrer"
+                      // Prevents the map from glitching when clicking the button
+                      onMouseEnter={(e) => e.stopPropagation()} 
+                      className="inline-flex items-center gap-2 mt-4 bg-yellow-300 border-2 border-black text-black text-sm font-black px-4 py-2 rounded-xl shadow-[2px_2px_0_rgba(0,0,0,1)] hover:bg-yellow-200 active:translate-y-1 active:translate-x-1 active:shadow-none transition-all"
+                    >
+                    <span>Navigate</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
                     </div>
                   </div>
-                </div>
               ))}
             </div>
 
