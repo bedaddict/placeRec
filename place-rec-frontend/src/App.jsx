@@ -159,7 +159,7 @@ function App() {
             onFocus={() => setShowDropdown(location.length > 0)}
             // Delay closing slightly so clicks on the dropdown register first
             onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-            placeholder="Let's try Blok M, Bintaro..."
+            placeholder="Let's try Blok M, Bogor Timur..."
             className="w-full bg-white border-4 border-black rounded-2xl px-6 py-4 text-black font-bold placeholder-slate-400 shadow-[4px_4px_0_rgba(0,0,0,1)] focus:outline-none focus:translate-y-1 focus:translate-x-1 focus:shadow-none transition-all"
           />
           
